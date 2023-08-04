@@ -1,0 +1,63 @@
+version: "3.9"
+
+services:
+  optuna_db:
+    image: postgres:15
+    restart: unless-stopped
+    container_name: optuna_db
+    volumes:
+      - ${OPTUNA_DB_PATH}:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=optuna
+      - POSTGRES_USER=optuna
+      - POSTGRES_PASSWORD=${OPTUNA_DB_PASSWORD}
+    networks:
+      - optuna
+
+  optuna_duckdns:
+    image: lscr.io/linuxserver/duckdns:latest
+    container_name: optuna_duckdns
+    restart: unless-stopped
+    networks:
+      - optuna
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - SUBDOMAINS={$OPTUNA_DUCKDNS_SUBDOMAIN}
+      - TOKEN=${OPTUNA_DUCKDNS_TOKEN}
+
+  optuna_dashboard:
+    image: ghcr.io/optuna/optuna-dashboard:latest
+    depends_on:
+      - optuna_db
+    container_name: optuna_dashboard
+    command: postgresql+psycopg2://optuna:${OPTUNA_DB_PASSWORD}@optuna_db:5432/optuna
+    restart: unless-stopped
+    networks:
+      - optuna
+
+  optuna_caddy:
+    image: caddy:2.6.4-alpine
+    container_name: optuna_caddy
+    depends_on:
+      - optuna_dashboard
+      - optuna_duckdns
+    ports:
+      - 80:80
+      - 443:443
+    restart: unless-stopped
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    environment:
+      - DUCKDNS_SUBDOMAIN=${OPTUNA_DUCKDNS_SUBDOMAIN}
+      - USERNAME=${OPTUNA_DASHBOARD_USERNAME}
+      - HASHED_PASSWORD=${OPTUNA_DASHBOARD_HASHED_PASSWORD}
+    networks:
+      - optuna
+
+networks:
+  optuna:
+    driver: bridge

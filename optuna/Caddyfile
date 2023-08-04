@@ -1,0 +1,6 @@
+http://{$DUCKDNS_SUBDOMAIN}.duckdns.org {
+    basicauth {
+        {$USERNAME} {$HASHED_PASSWORD}
+    }
+    reverse_proxy optuna_dashboard:8080
+}
