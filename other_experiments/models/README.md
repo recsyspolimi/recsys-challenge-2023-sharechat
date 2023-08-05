@@ -6,3 +6,4 @@ These models are:
 - [XGBoost](xgb_prediction_generator.py)
 - [XGBoost (numerical) with CatBoost (on the categoricals)](xgb+cat.py)
 - [CatBoost weighted](cat_weighted_hybrid_creator_aws.py)
+- [Focal Loss LightGBM](focal-loss-lightgbm.ipynb)
